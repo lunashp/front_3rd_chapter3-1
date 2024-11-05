@@ -12,7 +12,7 @@ import {
 } from '../../utils/dateUtils';
 
 describe('getDaysInMonth', () => {
-  it('1월은 31일 수를 반환한다', () => {});
+  it('1월은 31일 일수를 반환한다', () => {});
 
   it('4월은 30일 일수를 반환한다', () => {});
 

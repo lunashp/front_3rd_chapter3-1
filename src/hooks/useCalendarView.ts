@@ -7,6 +7,8 @@ export const useCalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [holidays, setHolidays] = useState<{ [key: string]: string }>({});
 
+  // console.log('currentDate', currentDate);
+
   const navigate = (direction: 'prev' | 'next') => {
     setCurrentDate((prevDate) => {
       const newDate = new Date(prevDate);
