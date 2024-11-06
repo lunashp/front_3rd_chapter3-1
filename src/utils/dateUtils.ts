@@ -4,11 +4,15 @@ import { Event } from '../types.ts';
  * 주어진 년도와 월의 일수를 반환합니다.
  */
 export function getDaysInMonth(year: number, month: number): number {
+  if (month < 1 || month > 12) {
+    throw new Error('유효하지 않은 값');
+  }
   return new Date(year, month, 0).getDate();
 }
 
 /**
  * 주어진 날짜가 속한 주의 모든 날짜를 반환합니다.
+ * 주의 시작: 일요일
  */
 export function getWeekDates(date: Date): Date[] {
   const day = date.getDay();
@@ -23,6 +27,10 @@ export function getWeekDates(date: Date): Date[] {
   return weekDates;
 }
 
+/**
+ * 주어진 날짜가 속한 월의 주별 배열을 반환합니다.
+ * 주의 시작: 일요일
+ */
 export function getWeeksAtMonth(currentDate: Date) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -51,10 +59,16 @@ export function getWeeksAtMonth(currentDate: Date) {
   return weeks;
 }
 
+/**
+ * 주어진 날짜에 속하는 이벤트 목록을 반환합니다.
+ */
 export function getEventsForDay(events: Event[], date: number): Event[] {
   return events.filter((event) => new Date(event.date).getDate() === date);
 }
 
+/**
+ * 주어진 날짜가 속한 주를 "YYYY년 M월 N주" 형식으로 반환합니다.
+ */
 export function formatWeek(targetDate: Date) {
   const dayOfWeek = targetDate.getDay();
   const diffToThursday = 4 - dayOfWeek;
@@ -87,14 +101,31 @@ export function formatMonth(date: Date): string {
 /**
  * 주어진 날짜가 특정 범위 내에 있는지 확인합니다.
  */
+
+const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+// export function isDateInRange(date: Date, rangeStart: Date, rangeEnd: Date): boolean {
+//   return date >= rangeStart && date <= rangeEnd;
+// }
+
 export function isDateInRange(date: Date, rangeStart: Date, rangeEnd: Date): boolean {
-  return date >= rangeStart && date <= rangeEnd;
+  const normalizedDate = stripTime(date);
+  const normalizedStart = stripTime(rangeStart);
+  const normalizedEnd = stripTime(rangeEnd);
+
+  return normalizedDate >= normalizedStart && normalizedDate <= normalizedEnd;
 }
 
+/**
+ * 숫자를 지정된 자릿수로 0으로 채워진 문자열로 반환합니다.
+ */
 export function fillZero(value: number, size = 2) {
   return String(value).padStart(size, '0');
 }
 
+/**
+ * 주어진 날짜와 일자를 "YYYY-MM-DD" 형식으로 반환합니다.
+ */
 export function formatDate(currentDate: Date, day?: number) {
   return [
     currentDate.getFullYear(),
