@@ -1,5 +1,5 @@
 import { ChakraProvider } from '@chakra-ui/react';
-import { render, screen, within, act } from '@testing-library/react';
+import { render, screen, within, act, waitFor } from '@testing-library/react';
 import { UserEvent, userEvent } from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { ReactElement } from 'react';
@@ -44,9 +44,78 @@ const saveSchedule = async (
 describe('일정 CRUD 및 기본 기능', () => {
   it('입력한 새로운 일정 정보에 맞춰 모든 필드가 이벤트 리스트에 정확히 저장된다.', async () => {
     // ! HINT. event를 추가 제거하고 저장하는 로직을 잘 살펴보고, 만약 그대로 구현한다면 어떤 문제가 있을 지 고민해보세요.
+
+    setupMockHandlerCreation();
+    const { user } = setup(<App />);
+
+    const newEvent = {
+      title: '회의',
+      date: '2024-10-04',
+      startTime: '09:00',
+      endTime: '10:00',
+      description: '미팅',
+      location: '회의실',
+      category: '업무',
+    };
+
+    const eventList = screen.getByTestId('event-list');
+    expect(within(eventList).getByText('검색 결과가 없습니다.')).toBeInTheDocument();
+
+    await saveSchedule(user, newEvent);
+
+    expect(within(eventList).getByPlaceholderText('검색어를 입력하세요')).toBeInTheDocument();
+    expect(within(eventList).getByText('회의')).toBeInTheDocument();
+    expect(within(eventList).getByText('2024-10-04')).toBeInTheDocument();
+    expect(within(eventList).getByText(/09:00/)).toBeInTheDocument();
+    expect(within(eventList).getByText(/10:00/)).toBeInTheDocument();
+    expect(within(eventList).getByText('미팅')).toBeInTheDocument();
+    expect(within(eventList).getByText('회의실')).toBeInTheDocument();
+    expect(within(eventList).getByText(/업무/)).toBeInTheDocument();
   });
 
-  it('기존 일정의 세부 정보를 수정하고 변경사항이 정확히 반영된다', async () => {});
+  it.only('기존 일정의 세부 정보를 수정하고 변경사항이 정확히 반영된다', async () => {
+    setupMockHandlerUpdating();
+    const { user } = setup(<App />);
+
+    const eventList = screen.getByTestId('event-list');
+    await waitFor(() => expect(within(eventList).getByText('기존 회의')).toBeInTheDocument());
+
+    const editButton = within(eventList).getAllByRole('button', { name: 'Edit event' });
+    await user.click(editButton[0]);
+
+    await user.clear(screen.getByLabelText(/제목/));
+    await user.type(screen.getByLabelText('제목'), '수정된 회의');
+
+    await user.clear(screen.getByLabelText(/날짜/));
+    await user.type(screen.getByLabelText(/날짜/), '2024-11-16');
+
+    await user.clear(screen.getByLabelText(/시작 시간/));
+    await user.type(screen.getByLabelText(/시작 시간/), '10:00');
+
+    await user.clear(screen.getByLabelText(/종료 시간/));
+    await user.type(screen.getByLabelText(/종료 시간/), '11:00');
+
+    await user.clear(screen.getByLabelText(/설명/));
+    await user.type(screen.getByLabelText(/설명/), '수정된 회의 설명');
+
+    await user.clear(screen.getByLabelText(/위치/));
+    await user.type(screen.getByLabelText(/위치/), '수정된 회의실');
+
+    await user.selectOptions(screen.getByLabelText(/카테고리/), '개인');
+
+    await user.click(screen.getByRole('button', { name: /일정 수정/ }));
+
+    const updatedEventList = await screen.findByTestId('event-list');
+    await waitFor(() => {
+      expect(within(updatedEventList).getByText('수정된 회의')).toBeInTheDocument();
+      expect(within(updatedEventList).getByText('2024-11-16')).toBeInTheDocument();
+      expect(within(updatedEventList).getByText(/10:00/)).toBeInTheDocument();
+      expect(within(updatedEventList).getByText(/11:00/)).toBeInTheDocument();
+      expect(within(updatedEventList).getByText('수정된 회의 설명')).toBeInTheDocument();
+      expect(within(updatedEventList).getByText('수정된 회의실')).toBeInTheDocument();
+      expect(within(updatedEventList).getByText(/개인/)).toBeInTheDocument();
+    });
+  });
 
   it('일정을 삭제하고 더 이상 조회되지 않는지 확인한다', async () => {});
 });
